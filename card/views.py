@@ -1,5 +1,5 @@
-from logging import exception
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import EmptyResultSet, ObjectDoesNotExist
+from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -14,16 +14,16 @@ class CardView(APIView):
             query = Card.objects.all()
             serializer = CardSerializer(query, many=True)
             return Response(serializer.data)
-        except exception as e:
-            return Response(str(e))
+        except EmptyResultSet:
+            return Response("The card is empty")
 
     def post(self, request):
         try:
             name = request.data['name']
             query = Card.objects.create(name=name)
             return Response(f"card created : {query.name}")
-        except exception as e:
-            return Response(str(e))
+        except IntegrityError:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def put(self, request, id):
         try:
